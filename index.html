@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="ja">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>丹波の七日間</title>
+<title>Wanna know how's the weather today, compared to yesterday?</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
@@ -50,7 +50,7 @@ body {
   display: grid; gap: 20px;
 }
 header { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
-h1 { font-family: var(--display); font-weight: 800; font-size: 1.75rem; margin: 0; letter-spacing: .04em; text-wrap: balance; }
+h1 { font-family: var(--display); font-weight: 800; font-size: 1.5rem; line-height: 1.25; max-width: 22em; margin: 0; letter-spacing: .01em; text-wrap: balance; }
 .place { color: var(--muted); font-size: .8rem; letter-spacing: .08em; }
 .now { text-align: right; }
 .now .t { font-family: var(--display); font-size: 2.2rem; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
@@ -61,13 +61,13 @@ h1 { font-family: var(--display); font-weight: 800; font-size: 1.75rem; margin: 
 svg { display: block; width: 100%; height: auto; }
 .days { display: grid; gap: 0; border-top: 1px solid var(--line); }
 .day {
-  display: grid; grid-template-columns: 4.6em 1fr auto auto; align-items: center; gap: 10px;
+  display: grid; grid-template-columns: 6.6em 1fr auto auto; align-items: center; gap: 10px;
   padding: 10px 8px; border-bottom: 1px solid var(--line);
 }
 .day.past { background: var(--past-bg); color: var(--muted); }
 .day.past .hi, .day.past .lo { opacity: .8; }
 .day.today { box-shadow: inset 3px 0 0 var(--today); }
-.date { font-variant-numeric: tabular-nums; line-height: 1.25; }
+.date { white-space: nowrap; font-variant-numeric: tabular-nums; line-height: 1.25; }
 .date b { display: block; font-weight: 700; }
 .date small { font-size: .72rem; color: var(--muted); letter-spacing: .06em; }
 .today .date small { color: var(--today); font-weight: 700; }
@@ -90,7 +90,7 @@ button {
 }
 button:focus-visible { outline: 2px solid var(--today); outline-offset: 2px; }
 @media (max-width: 420px) {
-  .day { grid-template-columns: 3.9em 1fr auto auto; gap: 6px; padding: 10px 4px; }
+  .day { grid-template-columns: 5.6em 1fr auto auto; gap: 6px; padding: 10px 4px; }
   .wx svg { width: 24px; height: 24px; }
 }
 </style>
@@ -99,28 +99,28 @@ button:focus-visible { outline: 2px solid var(--today); outline-offset: 2px; }
 <div class="wrap">
   <header>
     <div>
-      <h1>丹波の七日間</h1>
-      <div class="place">兵庫県丹波市 ・ 過去3日 / 今日 / 先3日</div>
+      <h1>Wanna know how's the weather today, compared to yesterday?</h1>
+      <div class="place">Tanba, Hyogo · past 3 days / today / next 3 days</div>
     </div>
-    <div class="now" id="now"><div class="t">--°</div><div class="s">読み込み中</div></div>
+    <div class="now" id="now"><div class="t">--°</div><div class="s">Loading</div></div>
   </header>
 
-  <section class="panel" aria-label="気温の推移">
+  <section class="panel" aria-label="Temperature trend">
     <div class="legend">
-      <span><i style="background:var(--warm)"></i>最高気温</span>
-      <span><i style="background:var(--cool)"></i>最低気温</span>
-      <span>網かけ＝過去（実績）</span>
+      <span><i style="background:var(--warm)"></i>High</span>
+      <span><i style="background:var(--cool)"></i>Low</span>
+      <span>Shaded = past (observed)</span>
     </div>
-    <div id="chart"><div class="state">気温データを取得しています…</div></div>
+    <div id="chart"><div class="state">Fetching temperatures…</div></div>
   </section>
 
-  <section class="days" id="days" aria-label="日ごとの天気"></section>
+  <section class="days" id="days" aria-label="Daily weather"></section>
 
   <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
     <div class="note" id="updated"></div>
-    <button id="reload" type="button">更新</button>
+    <button id="reload" type="button">Refresh</button>
   </div>
-  <p class="note">データ：Open-Meteo（地点 北緯35.17・東経135.04、丹波市氷上町付近）。過去の値は観測とモデルを合わせた推定値で、アメダス柏原の観測値と少しずれることがあります。差は前日との比較です。</p>
+  <p class="note">Data: Open-Meteo (35.17°N, 135.04°E, near Hikami, Tanba City). Past values are estimates that blend observations with model data, so they may differ slightly from the JMA Kaibara station. The small numbers under each temperature show the change from the previous day.</p>
 </div>
 
 <script>
@@ -131,20 +131,21 @@ const URL_API = "https://api.open-meteo.com/v1/forecast"
   + "&current=temperature_2m,weather_code"
   + "&timezone=Asia%2FTokyo&past_days=3&forecast_days=4";
 
-const WD = ["日","月","火","水","木","金","土"];
+const WD = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 function wxInfo(code) {
-  if (code === 0) return ["快晴", "sun"];
-  if (code === 1) return ["晴れ", "sun"];
-  if (code === 2) return ["晴れ時々くもり", "partly"];
-  if (code === 3) return ["くもり", "cloud"];
-  if (code === 45 || code === 48) return ["霧", "fog"];
-  if (code >= 51 && code <= 57) return ["霧雨", "rain"];
-  if (code >= 61 && code <= 67) return [code >= 65 ? "強い雨" : "雨", "rain"];
-  if (code >= 71 && code <= 77) return ["雪", "snow"];
-  if (code >= 80 && code <= 82) return ["にわか雨", "rain"];
-  if (code === 85 || code === 86) return ["にわか雪", "snow"];
-  if (code >= 95) return ["雷雨", "storm"];
+  if (code === 0) return ["Clear", "sun"];
+  if (code === 1) return ["Sunny", "sun"];
+  if (code === 2) return ["Partly cloudy", "partly"];
+  if (code === 3) return ["Cloudy", "cloud"];
+  if (code === 45 || code === 48) return ["Fog", "fog"];
+  if (code >= 51 && code <= 57) return ["Drizzle", "rain"];
+  if (code >= 61 && code <= 67) return [code >= 65 ? "Heavy rain" : "Rain", "rain"];
+  if (code >= 71 && code <= 77) return ["Snow", "snow"];
+  if (code >= 80 && code <= 82) return ["Showers", "rain"];
+  if (code === 85 || code === 86) return ["Snow showers", "snow"];
+  if (code >= 95) return ["Thunderstorm", "storm"];
   return ["—", "cloud"];
 }
 
@@ -189,17 +190,17 @@ function renderChart(days, todayIdx) {
   const y = v => top + (mx - v) / (mx - mn) * (H - top - bottom);
   const x = i => padL + col * i + col / 2;
   let s = "";
-  // 過去の網かけ
+  // shade past days
   if (todayIdx > 0) s += `<rect x="${padL}" y="0" width="${col * todayIdx}" height="${H}" fill="var(--past-bg)"/>`;
-  // 今日の帯
+  // today band
   s += `<rect x="${padL + col * todayIdx}" y="0" width="${col}" height="${H}" fill="var(--today)" opacity=".08"/>`;
-  // 補助線
+  // grid lines
   const step = (mx - mn) > 16 ? 5 : 2;
   for (let t = Math.ceil(mn / step) * step; t <= mx; t += step) {
     s += `<line x1="${padL}" x2="${W - padR}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)" stroke-width="1"/>`;
     s += `<text x="${W - padR}" y="${y(t) - 3}" text-anchor="end" font-size="10" fill="var(--muted)">${t}°</text>`;
   }
-  // 最高〜最低の縦帯
+  // high-low range bars
   days.forEach((d, i) => {
     if (d.hi != null && d.lo != null)
       s += `<line x1="${x(i)}" x2="${x(i)}" y1="${y(d.hi)}" y2="${y(d.lo)}" stroke="var(--muted)" stroke-width="6" stroke-linecap="round" opacity=".18"/>`;
@@ -218,25 +219,25 @@ function renderChart(days, todayIdx) {
       s += `<circle cx="${x(i)}" cy="${y(d.lo)}" r="${r}" fill="var(--cool)" stroke="var(--surface)" stroke-width="1.5"/>`;
       s += `<text x="${x(i)}" y="${y(d.lo) + 19}" text-anchor="middle" font-size="12" font-weight="700" fill="var(--cool)">${Math.round(d.lo)}</text>`;
     }
-    const lbl = i === todayIdx ? "今日" : i === todayIdx - 1 ? "昨日" : i === todayIdx + 1 ? "明日" : `${d.m}/${d.d}`;
+    const lbl = i === todayIdx ? "Today" : i === todayIdx - 1 ? "Yest." : i === todayIdx + 1 ? "Tmrw" : `${d.m}/${d.d}`;
     s += `<text x="${x(i)}" y="${H - 20}" text-anchor="middle" font-size="12" font-weight="${isT ? 700 : 500}" fill="${isT ? "var(--today)" : "var(--fg)"}">${lbl}</text>`;
     s += `<text x="${x(i)}" y="${H - 6}" text-anchor="middle" font-size="10" fill="var(--muted)">${d.wd}</text>`;
   });
   document.getElementById("chart").innerHTML =
-    `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="7日間の最高・最低気温の折れ線グラフ" font-family="Zen Kaku Gothic New, sans-serif">${s}</svg>`;
+    `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Line chart of daily high and low temperatures over 7 days" font-family="Zen Kaku Gothic New, sans-serif">${s}</svg>`;
 }
 
 function renderDays(days, todayIdx) {
   document.getElementById("days").innerHTML = days.map((d, i) => {
     const cls = i < todayIdx ? "past" : i === todayIdx ? "today" : "";
-    const tag = i === todayIdx ? "今日" : i === todayIdx - 1 ? "昨日" : i === todayIdx + 1 ? "明日" : i < todayIdx ? "過去" : "予報";
+    const tag = i === todayIdx ? "Today" : i === todayIdx - 1 ? "Yesterday" : i === todayIdx + 1 ? "Tomorrow" : i < todayIdx ? "Past" : "Forecast";
     const [name, kind] = wxInfo(d.code);
     const rain = i < todayIdx
-      ? (d.psum != null ? `降水 ${d.psum.toFixed(1)}mm` : "")
-      : (d.pop != null ? `降水確率 ${d.pop}%` : "");
+      ? (d.psum != null ? `Rain ${d.psum.toFixed(1)} mm` : "")
+      : (d.pop != null ? `Rain chance ${d.pop}%` : "");
     const prev = days[i - 1];
     return `<div class="day ${cls}">
-      <div class="date"><b>${d.m}/${d.d}</b><small>${d.wd} ・ ${tag}</small></div>
+      <div class="date"><b>${MON[d.m - 1]} ${d.d}</b><small>${d.wd} · ${tag}</small></div>
       <div class="wx">${icon(kind)}<span>${name}<small>${rain}</small></span></div>
       <div class="temp hi"><span class="v">${fmt(d.hi)}°</span>${diff(d.hi, prev?.hi)}</div>
       <div class="temp lo"><span class="v">${fmt(d.lo)}°</span>${diff(d.lo, prev?.lo)}</div>
@@ -264,14 +265,14 @@ async function load() {
     renderChart(days, todayIdx);
     renderDays(days, todayIdx);
     if (j.current) {
-      nowEl.innerHTML = `<div class="t">${fmt(j.current.temperature_2m)}°</div><div class="s">いま ・ ${wxInfo(j.current.weather_code)[0]}</div>`;
+      nowEl.innerHTML = `<div class="t">${fmt(j.current.temperature_2m)}°</div><div class="s">Now · ${wxInfo(j.current.weather_code)[0]}</div>`;
     }
-    const t = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
-    document.getElementById("updated").textContent = `${t} に取得`;
+    const t = new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
+    document.getElementById("updated").textContent = `Updated ${t} (JST)`;
   } catch (e) {
     document.getElementById("chart").innerHTML =
-      `<div class="state">天気データを取得できませんでした（${e.message}）。通信状況を確認して「更新」を押してください。</div>`;
-    nowEl.innerHTML = '<div class="t">--°</div><div class="s">取得できませんでした</div>';
+      `<div class="state">Couldn't load the weather (${e.message}). Check your connection and tap Refresh.</div>`;
+    nowEl.innerHTML = '<div class="t">--°</div><div class="s">Not available</div>';
   }
 }
 
